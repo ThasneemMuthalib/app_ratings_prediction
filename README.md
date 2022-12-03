@@ -6,7 +6,7 @@ Google Colab, R studio
 
 Python, R, Flask
 
-LinearRegression, scipy, RidgeCV, train_test_split, LassoCV, DecisionTreeRegressor, GridSearchCV, pickle, sklearn, OneHotEncoder, matplotlib, seaborn, confusion_matrix, accuracy_score, mean_squared_error, mean_absolute_error, numpy, pandas
+LinearRegression, scipy, RidgeCV, train_test_split, LassoCV, DecisionTreeRegressor, RandomForestRegressor,  Partial dependency plots, GridSearchCV, pickle, sklearn, OneHotEncoder, matplotlib, seaborn, confusion_matrix, accuracy_score, mean_squared_error, mean_absolute_error, numpy, pandas
 
 
 
