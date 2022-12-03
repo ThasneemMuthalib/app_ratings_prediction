@@ -1,0 +1,148 @@
+########################ridge###########################################
+## This code was used to draw the plots for Ridge, Lasso and Elasticnet. And to build the model using Elasticnet regression. 
+library(dplyr)
+
+setwd('G:/3rd year/ST/ST 3082/project/4.final')
+
+train = read.csv('dataforridge.csv')
+head(train)
+train = train %>% dplyr::select(-"X")
+head(train)
+
+library(glmnet)
+x_train <- model.matrix(user_rating ~ ., train)[, -1]
+y_train <- train$user_rating
+
+lambdas <- 10^seq(2, -3, by = -.1)
+ridge_reg = glmnet(x_train, y_train, nlambda = 25, alpha = 0, family = 'gaussian', lambda = lambdas)
+
+summary(ridge_reg)
+
+cv_ridge <- cv.glmnet(x_train, y_train, alpha = 0, lambda = lambdas)
+optimal_lambda <- cv_ridge$lambda.min
+optimal_lambda
+
+# Coefficients for ridge regression model as lambda grows 
+plot(ridge_reg, xvar = "lambda")
+
+# 10-fold CV MSE for a ridge model 
+plot(cv_ridge, main = "Ridge penalty\n\n")
+
+# get results
+eval_results <- function(true, predicted, df) {
+  SSE <- sum((predicted - true)^2)
+  SST <- sum((true - mean(true))^2)
+  R_square <- 1 - SSE / SST
+  RMSE = sqrt(SSE/nrow(df))
+  
+  # Model performance metrics
+  data.frame(
+    RMSE = RMSE,
+    Rsquare = R_square
+  )
+}
+
+#coef(ridge_reg)
+
+# Prediction and evaluation on train data
+predictions_train <- predict(ridge_reg, s = optimal_lambda, newx = x_train)
+eval_results(y_train, predictions_train, train)
+
+# mean squared error ridge - training
+mean((y_train-predictions_train)**2)
+
+ridge_reg_model <- glmnet(x_train, y_train, alpha = 0, lambda = optimal_lambda)
+coef(ridge_reg_model)
+
+##################################LASSO########################################
+
+train2 = read.csv('dataforlasso.csv')
+head(train2)
+train2 = train2 %>% dplyr::select(-"X")
+head(train2)
+
+library(glmnet)
+x_train2 <- model.matrix(user_rating ~ ., train2)[, -1]
+y_train2 <- train2$user_rating
+
+lambdas <- 10^seq(2, -3, by = -.1)
+lasso_reg = glmnet(x_train2, y_train2, nlambda = 25, alpha = 1, family = 'gaussian', lambda = lambdas)
+
+summary(lasso_reg)
+
+cv_lasso <- cv.glmnet(x_train2, y_train2, alpha = 1, lambda = lambdas)
+optimal_lambda <- cv_lasso$lambda.min
+optimal_lambda
+
+# Coefficients for Lasso regression model as lambda grows
+plot(lasso_reg, xvar = "lambda")
+
+# 10-fold CV MSE for a Lasso model
+plot(cv_lasso, main = "Lasso penalty\n\n")
+
+# Prediction and evaluation on train data
+predictions_train <- predict(lasso_reg, s = optimal_lambda, newx = x_train2)
+eval_results(y_train2, predictions_train, train2)
+
+# mean squared error lasso - train
+mean((y_train-predictions_train)**2)
+
+lasso_reg_model <- glmnet(x_train2, y_train2, alpha = 1, lambda = optimal_lambda)
+coef(lasso_reg_model)
+
+#################################ELASTIC NET###############################3###
+
+train = read.csv('dataforlasso.csv')
+head(train)
+train = train %>% dplyr::select(-"X")
+head(train)
+
+test.data = read.csv("dataforelastic.csv")
+
+x_test <- model.matrix(user_rating ~ ., test.data)[, -1]
+y_test <- test.data$user_rating
+
+library(glmnet)
+x_train <- model.matrix(user_rating ~ ., train)[, -1]
+y_train <- train$user_rating
+library(caret)
+library(ggplot2)
+library(dplyr)# To get train function
+
+#grid search across 
+cv_glmnet <- train(
+  x = x_train,
+  y = y_train,
+  method = "glmnet",
+  preProc = c("zv", "center", "scale"),
+  trControl = trainControl(method = "cv", number = 10),
+  tuneLength = 10
+)
+
+cv_glmnet$bestTune
+
+# results for model with lowest RMSE
+cv_glmnet$results %>%
+  filter(alpha == cv_glmnet$bestTune$alpha, lambda == cv_glmnet$bestTune$lambda)
+
+# plot cross-validated RMSE
+ggplot(cv_glmnet)
+
+# predict user rating on test data
+pred <- predict(cv_glmnet, x_train)
+
+# root mean squared error elasticnet - training
+eval_results(y_train, pred, x_train)
+
+# mean squared error elasticnet - training
+mean((y_train-pred)**2)
+
+# Evaluating test data
+predtest <- predict(cv_glmnet, x_test)
+eval_results(y_test, predtest, test.data)
+
+# mean squared error elasticnet - test
+mean((y_test-predtest)**2)
+
+elastic_reg_model <- glmnet(x_train, y_train, alpha = 0.7, lambda =  0.01541887)
+coef(elastic_reg_model)
